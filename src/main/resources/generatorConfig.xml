@@ -38,6 +38,16 @@
             <property name="trimStrings" value="true"/>
         </javaModelGenerator>
 
+        <table schema="" tableName="seckill_order" domainObjectName="Order" enableCountByExample="false"
+               enableDeleteByExample="false" enableSelectByExample="false" enableUpdateByExample="false"
+               selectByExampleQueryId="false">
+        </table>
+
+        <table schema="" tableName="seckill_user" domainObjectName="User" enableCountByExample="false"
+               enableDeleteByExample="false" enableSelectByExample="false" enableUpdateByExample="false"
+               selectByExampleQueryId="false">
+        </table>
+
 
         <!-- targetProject:mapper映射文件生成的位置 -->
         <sqlMapGenerator targetPackage="mappers"

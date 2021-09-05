@@ -165,8 +165,7 @@
   <select id="querySeckillActivitysByStatus" parameterType="java.lang.Integer" resultMap="BaseResultMap">
     select
     <include refid="Base_Column_List"/>
-    from seckill_activity
-    where activity_status = #{id,jdbcType=SMALLINT}
+    from seckill_activity where activity_status = #{id,jdbcType=SMALLINT}
   </select>
 
 </mapper>
