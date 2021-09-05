@@ -8,7 +8,7 @@ import javax.annotation.Resource;
 
 
 @SpringBootTest
-public class RedisTests {
+public class RedisTest {
 
     @Resource
     private RedisService redisService;
