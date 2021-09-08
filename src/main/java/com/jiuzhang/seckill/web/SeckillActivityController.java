@@ -1,5 +1,6 @@
 package com.jiuzhang.seckill.web;
 
+import com.jiuzhang.seckill.db.dao.OrderDao;
 import com.jiuzhang.seckill.db.dao.SeckillActivityDao;
 import com.jiuzhang.seckill.db.dao.SeckillCommodityDao;
 import com.jiuzhang.seckill.db.po.Order;
@@ -32,12 +33,13 @@ public class SeckillActivityController {
     private SeckillCommodityDao seckillCommodityDao;
 
     @Autowired
+    private OrderDao orderDao;
+
+    @Autowired
     SeckillActivityService seckillActivityService;
 
     @RequestMapping("/addSeckillActivity")
-    public String addSeckillActivity() {
-        return "add_activity";
-    }
+    public String addSeckillActivity() { return "add_activity"; }
 
     // publish lightning deal activity and status response page
     @ResponseBody
@@ -156,5 +158,14 @@ public class SeckillActivityController {
             modelAndView.setViewName("order_wait");
         }
     return modelAndView;
+    }
+
+    /**
+     * process payment
+     * @return */
+    @RequestMapping("/seckill/payOrder/{orderNo}")
+    public String payOrder(@PathVariable String orderNo) throws Exception {
+        seckillActivityService.payOrderProcess(orderNo);
+        return "redirect:/seckill/orderQuery/" + orderNo;
     }
 }
