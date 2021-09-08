@@ -182,4 +182,11 @@
     WHERE id = #{id,jdbcType=BIGINT}
   </update>
 
+  <update id="revertStock" parameterType="java.land.Long">
+    UPDATE seckill_activity
+    SET available_stock = available_stock + 1
+        lock_stock = lock_stock - 1
+    WHERE id = #{id,jdbcType=BIGINT}
+  </update>
+
 </mapper>
