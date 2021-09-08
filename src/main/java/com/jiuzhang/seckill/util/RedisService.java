@@ -35,7 +35,8 @@ public class RedisService {
      * inventory decrement by Lua in Redis
      *
      * @return
-     * @throws Exception */
+     * @throws Exception
+     * */
     public boolean stockDeductValidator(String key)  {
         try(Jedis jedisClient = jedisPool.getResource()) {
             // atomic operation by Lua
@@ -60,5 +61,11 @@ public class RedisService {
             System.out.println("库存扣减失败：" + throwable.toString());
             return false;
         }
+    }
+
+    public void revertStock(String key) {
+        Jedis jedisClient = jedisPool.getResource();
+        jedisClient.incr(key);
+        jedisClient.close();
     }
 }
