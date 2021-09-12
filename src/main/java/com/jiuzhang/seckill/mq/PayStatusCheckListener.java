@@ -45,6 +45,8 @@ public class PayStatusCheckListener implements RocketMQListener<MessageExt> {
             seckillActivityDao.revertStock(order.getSeckillActivityId());
             // 5. revert the available inventory on Redis
             redisService.revertStock("stock:" + order.getSeckillActivityId());
+            // 6. remove userId from the order limit table
+            redisService.removeLimitMember(order.getSeckillActivityId(), order.getUserId());
         }
     }
 }
