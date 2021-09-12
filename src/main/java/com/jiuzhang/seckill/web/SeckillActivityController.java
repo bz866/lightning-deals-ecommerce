@@ -7,6 +7,7 @@ import com.jiuzhang.seckill.db.po.Order;
 import com.jiuzhang.seckill.db.po.SeckillActivity;
 import com.jiuzhang.seckill.db.po.SeckillCommodity;
 import com.jiuzhang.seckill.services.SeckillActivityService;
+import com.jiuzhang.seckill.util.RedisService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -37,6 +39,9 @@ public class SeckillActivityController {
 
     @Autowired
     SeckillActivityService seckillActivityService;
+
+    @Resource
+    private RedisService redisService;
 
     @RequestMapping("/addSeckillActivity")
     public String addSeckillActivity() { return "add_activity"; }
@@ -113,6 +118,17 @@ public class SeckillActivityController {
         ModelAndView modelAndView = new ModelAndView();
         try {
             /*
+            Limit orders by users, check if the user has already bought,
+            bought user_ids are saved in redis
+             */
+            if (redisService.isInLimitMember(seckillActivityId, userId)) {
+                // return notification if user is in order limit table
+                modelAndView.addObject("resultInfo", "对不起，您已经在限购名单中");
+                modelAndView.setViewName("seckill_result");
+                return modelAndView;
+            }
+
+            /*
              * Validate if inventory available by Lua in Redis */
             stockValidateResult = seckillActivityService.seckillStockValidator(seckillActivityId);
             if (stockValidateResult) {
@@ -121,10 +137,9 @@ public class SeckillActivityController {
                         "resultInfo",
                         "秒杀成功，订单创建中，订单ID:" + order.getOrderNo()
                 );
-                modelAndView.addObject(
-                        "orderNo",
-                        order.getOrderNo()
-                );
+                modelAndView.addObject("orderNo", order.getOrderNo());
+                // add userId to order limit table to set order limit
+                redisService.addLimitMember(seckillActivityId, userId);
             } else {
                 modelAndView.addObject(
                         "resultInfo",
@@ -168,4 +183,7 @@ public class SeckillActivityController {
         seckillActivityService.payOrderProcess(orderNo);
         return "redirect:/seckill/orderQuery/" + orderNo;
     }
+
+
+
 }

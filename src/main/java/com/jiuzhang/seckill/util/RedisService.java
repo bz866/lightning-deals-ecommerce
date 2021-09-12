@@ -1,5 +1,6 @@
 package com.jiuzhang.seckill.util;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
@@ -7,6 +8,7 @@ import redis.clients.jedis.JedisPool;
 
 import java.util.Collections;
 
+@Slf4j
 @Service
 public class RedisService {
     @Autowired
@@ -66,6 +68,32 @@ public class RedisService {
     public void revertStock(String key) {
         Jedis jedisClient = jedisPool.getResource();
         jedisClient.incr(key);
+        jedisClient.close();
+    }
+
+    /*
+    Check if a userId is in the order limit table
+     */
+    public boolean isInLimitMember(long seckillActivityId, long userId) {
+        Jedis jedisClient = jedisPool.getResource();
+        boolean sismember = jedisClient.sismember("seckillActivity_users:" + seckillActivityId, String.valueOf(userId));
+        jedisClient.close();
+        log.info("userId:{} activityId:{} 在已购名单中:{}", userId, seckillActivityId, sismember);
+        return sismember;
+    }
+
+    /*
+    Add userId to order limit table after order created
+     */
+    public void addLimitMember(long seckillActivityId, long userId) {
+        Jedis jedisClient = jedisPool.getResource();
+        jedisClient.sadd("seckillActivity_users:" + seckillActivityId, String.valueOf(userId));
+        jedisClient.close();
+    }
+
+    public void removeLimitMember(Long seckillActivityId, Long userId) {
+        Jedis jedisClient = jedisPool.getResource();
+        jedisClient.srem("seckillActivity_users:" + seckillActivityId, String.valueOf(userId));
         jedisClient.close();
     }
 }
