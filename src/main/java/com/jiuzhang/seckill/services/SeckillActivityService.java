@@ -84,14 +84,29 @@ public class SeckillActivityService {
     public void payOrderProcess(String orderNo) {
         log.info("完成支付订单 订单号:" + orderNo);
         Order order = orderDao.queryOrder(orderNo);
-        boolean deductStockResult = seckillActivityDao.deductStock(order.getSeckillActivityId());
-        if (deductStockResult) {
-            order.setPayTime(new Date());
-            // orders status:
-            // 0: no available inventory，invalid order
-            // 1: order created, pending for payment
-            // 2: payment complemented
-            orderDao.updateOrder(order);
+        /*
+         * 1. check if order existed
+         * 2. check if the payment status of the order is unpaid
+         * */
+        if (order == null) {
+            log.error("订单号对应订单不存在:" + orderNo);
+            return;
+        } else if(order.getOrderStatus() != 1 ) {
+            log.error("订单状态无效:" + orderNo);
+            return;
         }
+        /*
+        check if the order payment successful
+         */
+        order.setPayTime(new Date());
+        // order status
+        // 0: no available inventory, invalid order
+        // 1: order created, pending for payment
+        // 2: payment success, order.setOrderStatus(2);
+        orderDao.updateOrder(order);
+        /*
+         * 3. return message that payment success
+         */
+        rocketMQService.sendMessage("pay_done", JSON.toJSONString(order));
     }
 }
