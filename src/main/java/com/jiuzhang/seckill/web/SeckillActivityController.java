@@ -1,5 +1,11 @@
 package com.jiuzhang.seckill.web;
 
+import com.alibaba.csp.sentinel.Entry;
+import com.alibaba.csp.sentinel.SphU;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.alibaba.csp.sentinel.slots.block.RuleConstant;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
 import com.alibaba.fastjson.JSON;
 import com.jiuzhang.seckill.db.dao.OrderDao;
 import com.jiuzhang.seckill.db.dao.SeckillActivityDao;
@@ -19,10 +25,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -84,10 +92,15 @@ public class SeckillActivityController {
     // all lightning deals display page
     @RequestMapping("/seckills")
     public String activityList(Map<String, Object> resultMap) {
-        List<SeckillActivity> seckillActivities =
-                seckillActivityDao.querySeckillActivitysByStatus(1);
-        resultMap.put("seckillActivities", seckillActivities);
-        return "seckill_activity";
+        try (Entry entry = SphU.entry("seckills")) {
+            List<SeckillActivity> seckillActivities =
+                    seckillActivityDao.querySeckillActivitysByStatus(1);
+            resultMap.put("seckillActivities", seckillActivities);
+            return "seckill_activity";
+        } catch (BlockException ex) {
+            log.error("查询秒杀活动的列表被限流 "+ex.toString());
+            return "wait";
+        }
     }
 
     // lightning deal details page
@@ -211,4 +224,26 @@ public class SeckillActivityController {
         return date;
     }
 
+    @PostConstruct
+    public void seckillsFlow(){
+        // 1.store the ratelimit rules in a list
+        List<FlowRule> rules = new ArrayList<>();
+        // 2.create the ratelimit rule
+        FlowRule rule = new FlowRule();
+        // define resource，Sentinel only affect the
+        rule.setResource("seckills");
+        // define the type of the ratelimiter, define the type of QPS
+        rule.setGrade(RuleConstant.FLOW_GRADE_QPS);
+        // defline the QPS
+        rule.setCount(1);
+        FlowRule rule2 = new FlowRule();
+        rule2.setGrade(RuleConstant.FLOW_GRADE_QPS);
+        rule2.setCount(2);
+        rule2.setResource("HelloResource");
+        // 3.set ratelimit rule
+        rules.add(rule);
+        rules.add(rule2);
+        // 4.load the ratelimit rule
+        FlowRuleManager.loadRules(rules);
+    }
 }

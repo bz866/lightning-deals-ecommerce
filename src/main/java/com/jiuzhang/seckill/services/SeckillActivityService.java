@@ -98,7 +98,7 @@ public class SeckillActivityService {
 
     /**
      * 订单支付完成处理 * @param orderNo */
-    public void payOrderProcess(String orderNo) {
+    public void payOrderProcess(String orderNo) throws Exception {
         log.info("完成支付订单 订单号:" + orderNo);
         Order order = orderDao.queryOrder(orderNo);
         /*
