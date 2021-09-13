@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
+import java.util.UUID;
 
 
 @SpringBootTest
@@ -41,4 +42,29 @@ public class RedisTest {
     public void pushSeckillInfoToRedisTest() {
         seckillActivityService.pushSeckillInfoToRedis(19);
     }
+
+    /**
+     * test the Get method of the distributed locks under the high concurrency scenario
+     */
+    @Test
+    public void  testConcurrentAddLock() {
+        for (int i = 0; i < 10; i++) {
+            String requestId = UUID.randomUUID().toString();
+            // print result; true false false false false false false false false false
+            // only the first request get the lock
+            System.out.println(redisService.tryGetDistributedLock("A", requestId,1000));
+        }
+    }
+
+    /**
+     * test the Release method of the distributed locks under the high concurrency scenario
+     */
+    @Test
+    public void  testConcurrent() {
+        for (int i = 0; i < 10; i++) {
+            String requestId = UUID.randomUUID().toString();
+            // print result; true true true true true true true true true true
+            System.out.println(redisService.tryGetDistributedLock("A", requestId,1000));
+            redisService.releaseDistributedLock("A", requestId);
+        } }
 }
